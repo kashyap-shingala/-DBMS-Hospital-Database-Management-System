@@ -1,0 +1,220 @@
+-- 1) Query to get the number of doctors in each department:
+SELECT d.department_name, COUNT(*) AS doctor_count
+FROM Department d
+JOIN Staff s ON d.department_id = s.department_id
+JOIN Doctor doc ON s.staff_id = doc.staff_id
+GROUP BY d.department_name;
+
+-- 2) Query to get medicines with stock less than reorder threshold:
+SELECT medicine_name, inventory_qty FROM Medicine WHERE inventory_qty < reorder_threshold;
+
+-- 3) Query to get patient details based on a specific appointment:
+SELECT p.patient_name, p.contact_no FROM Patient p
+JOIN Appointment a ON p.patient_id = a.patient_id
+WHERE a.appointment_id = 1;
+
+-- 4) Query to get prescriptions given to a patient:
+SELECT m.medicine_name, p.medicine_dosage FROM Prescription p 
+JOIN Medicine m ON p.medicine_id = m.medicine_id 
+WHERE p.patient_id = 9;
+
+-- 5) Query to get all patients who are registered under a specific insurance provider:
+SELECT patient_name, contact_no FROM Patient 
+WHERE insurance_provider = 'Reliance General';
+
+-- 6) Fetch the department with the highest average doctor charges.
+SELECT 
+    Dept.department_name,
+    AVG(D.charges) AS average_charges
+FROM Doctor D
+JOIN Staff S ON D.staff_id = S.staff_id
+JOIN Department Dept ON S.department_id = Dept.department_id
+GROUP BY Dept.department_name
+ORDER BY average_charges DESC
+LIMIT 1;
+
+-- 7) Find the top 5 patients with the highest medical expenditure (based on invoices).
+SELECT 
+    P.patient_id,
+    P.patient_name,
+    SUM(I.invoice_amount) AS total_expenditure
+FROM Patient P
+JOIN Invoice I ON P.patient_id = I.patient_id
+GROUP BY P.patient_id, P.patient_name
+ORDER BY total_expenditure DESC
+LIMIT 5;
+
+-- 8) Find doctors who have attended to more than one patients in a single day.
+SELECT 
+    D.doctor_id,
+    S.name AS doctor_name,
+    A.appointment_date,
+    COUNT(A.appointment_id) AS patient_count
+FROM Doctor D
+JOIN Staff S ON D.staff_id = S.staff_id
+JOIN Appointment A ON D.doctor_id = A.doctor_id
+GROUP BY D.doctor_id, S.name, A.appointment_date
+HAVING COUNT(A.appointment_id) > 1;
+
+-- 9) List all expired medicines and their suppliers, sorted by expiration date.
+SELECT 
+    MD.medicine_id,
+    M.medicine_name,
+    MD.batch_no,
+    MD.expiry_date,
+    S.supplier_name
+FROM Medicine_detail MD
+JOIN Medicine M ON MD.medicine_id = M.medicine_id
+LEFT JOIN Supplier S ON M.supplier_id = S.supplier_id
+WHERE MD.expiry_date < CURRENT_DATE
+ORDER BY MD.expiry_date;
+
+-- 10) Fetch the top 3 suppliers by the total number of medicines and equipment supplied.
+SELECT 
+    S.supplier_id,
+    S.supplier_name,
+    COUNT(DISTINCT M.medicine_id) + COUNT(DISTINCT E.equipment_id) AS total_items_supplied
+FROM Supplier S
+LEFT JOIN Medicine M ON S.supplier_id = M.supplier_id
+LEFT JOIN Equipment E ON S.supplier_id = E.supplier_id
+GROUP BY S.supplier_id, S.supplier_name
+ORDER BY total_items_supplied DESC
+LIMIT 3;
+
+-- 11) Identify patients who have both invoices due and ongoing appointments.
+SELECT 
+    P.patient_id,
+    P.patient_name,
+    I.invoice_id,
+    A.appointment_id,
+    A.status
+FROM Patient P
+JOIN Invoice I ON P.patient_id = I.patient_id
+JOIN Appointment A ON P.patient_id = A.patient_id
+WHERE I.payment_status != 'Paid' AND A.status = 'In Progress';
+
+-- 12) Find the top 3 medicines contributing the highest revenue (based on sell price and quantity).
+SELECT 
+    M.medicine_id,
+    M.medicine_name,
+    M.sell_price * M.inventory_qty AS total_revenue
+FROM Medicine M
+ORDER BY total_revenue DESC
+LIMIT 3;
+
+-- 13) Find patients who have been admitted more than once in the same month
+SELECT 
+    P.patient_id,
+    P.patient_name,
+    TO_CHAR(R.admission_date, 'YYYY-MM') AS admission_month,
+    COUNT(R.room_id) AS admission_count
+FROM Patient P
+JOIN Room R ON P.patient_id = R.current_patient_id
+GROUP BY P.patient_id, P.patient_name, admission_month
+HAVING COUNT(R.room_id) > 1;
+
+-- 14) Query: Most Frequently Prescribed Medicines This query lists the top 10 medicines based on their prescription frequency.
+SELECT 
+    m.medicine_id AS MedicineID,
+    m.medicine_name AS MedicineName,
+    COUNT(p.pre_id) AS PrescriptionCount
+FROM 
+    Prescription p
+JOIN 
+    Medicine m ON p.medicine_id = m.medicine_id
+GROUP BY 
+    m.medicine_id, m.medicine_name
+ORDER BY 
+    PrescriptionCount DESC
+LIMIT 10;
+
+-- 15) Query: Appointment Statistics by Month This query calculates the number of appointments scheduled and completed per month.
+SELECT 
+    EXTRACT(MONTH FROM a.appointment_date) AS AppointmentMonth,
+    EXTRACT(YEAR FROM a.appointment_date) AS AppointmentYear,
+    COUNT(CASE WHEN a.status = 'Scheduled' THEN 1 END) AS ScheduledAppointments,
+    COUNT(CASE WHEN a.status = 'Completed' THEN 1 END) AS CompletedAppointments
+FROM 
+    Appointment a
+GROUP BY 
+    AppointmentYear, AppointmentMonth
+ORDER BY 
+    AppointmentYear, AppointmentMonth;
+
+-- 16) What is the average length of stay for patients in each room?
+SELECT 
+    r.room_id,
+    AVG(r.discharge_date - r.admission_date) AS AvgStayDuration
+FROM Room r
+GROUP BY r.room_id;
+
+-- 17) What is the availability of a specific doctor?
+SELECT 
+    d.doctor_id,
+    s.name AS DoctorName,
+    a.appointment_date,
+    a.appointment_time,
+    a.status
+FROM Appointment a
+JOIN Doctor d ON a.doctor_id = d.doctor_id
+JOIN Staff s ON d.staff_id = s.staff_id
+WHERE s.name = 'Ravi Patel' 
+ORDER BY a.appointment_date, a.appointment_time;
+
+-- 18) 1. Invoice Data for Patients Based on Payment Status
+SELECT 
+    i.invoice_id, 
+    i.invoice_date, 
+    i.invoice_amount, 
+    i.payment_method, 
+    i.payment_status, 
+    p.patient_name
+FROM 
+    Invoice i
+JOIN 
+    Patient p ON i.patient_id = p.patient_id
+WHERE 
+    i.payment_status = 'Paid'
+    AND i.invoice_date BETWEEN '2024-11-23' AND '2024-12-31'
+ORDER BY 
+    i.invoice_date DESC;
+
+-- 19) Equipment Usage and Supplier Information
+SELECT 
+    e.equipment_id, 
+    e.equipment_name, 
+    e.status, 
+    s.supplier_name, 
+    s.contact_person_name, 
+    s.contact_person_contact_no
+FROM 
+    Equipment e
+JOIN 
+    Supplier s ON e.supplier_id = s.supplier_id
+WHERE 
+    e.status = 'In Use' 
+    AND e.purchase_date > '2023-01-01'
+ORDER BY 
+    e.equipment_name ASC;
+
+Calculate Daily Revenue
+Analyze revenue streams by calculating daily income from room charges and medicine sales.
+
+-- 20) Calculate Daily Revenue
+SELECT 
+    DATE(r.admission_date) AS RevenueDate,
+    SUM(r.charge_per_day) AS DailyRoomRevenue,
+    SUM(m.sell_price * p.medicine_dosage * p.medicine_frequency) AS DailyMedicineRevenue,
+    SUM(r.charge_per_day + m.sell_price * p.medicine_dosage * p.medicine_frequency) AS TotalDailyRevenue
+FROM 
+    Room r
+JOIN 
+    Patient pt ON r.current_patient_id = pt.patient_id
+JOIN 
+    Prescription p ON pt.patient_id = p.patient_id
+JOIN 
+    Medicine m ON p.medicine_id = m.medicine_id
+GROUP BY 
+    RevenueDate
+ORDER BY 
+    RevenueDate;
