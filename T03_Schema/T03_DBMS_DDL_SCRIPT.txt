@@ -1,0 +1,159 @@
+CREATE TABLE Department (
+    department_id VARCHAR(10) PRIMARY KEY,
+    department_name VARCHAR(50),
+    location VARCHAR(5),
+    hod_id VARCHAR(10)
+);
+
+CREATE TABLE Staff (
+    staff_id VARCHAR(10) PRIMARY KEY,
+    name VARCHAR(30),
+    gender VARCHAR(6),
+    email VARCHAR(50),
+    contact_no VARCHAR(10),
+    staff_add_city VARCHAR(20),
+    staff_add_state VARCHAR(20),
+    staff_add_pincode INT,
+    DOB DATE,
+    role VARCHAR(20),
+    salary DECIMAL(10, 2),
+    qualification VARCHAR(50),
+    hire_date DATE,
+    department_id VARCHAR(10),
+    FOREIGN KEY (department_id) REFERENCES Department(department_id)
+);
+
+CREATE TABLE Patient (
+    patient_id INT PRIMARY KEY,
+    patient_name VARCHAR(30),
+    gender VARCHAR(6),
+    email VARCHAR(50),
+    contact_no VARCHAR(10),
+    DOB DATE,
+    emergency_contact_no VARCHAR(10),
+    patient_add_city VARCHAR(20),
+    patient_add_state VARCHAR(20),
+    patient_add_pincode INT,
+    medical_history TEXT,
+    registration_date DATE,
+    policy_no VARCHAR(20),
+    insurance_provider VARCHAR(50),
+    appointment_id INT,
+    FOREIGN KEY (appointment_id) REFERENCES Appointment(appointment_id)
+);
+
+CREATE TABLE Doctor (
+    doctor_id VARCHAR(10) PRIMARY KEY,
+    specialization VARCHAR(50),
+    experience INT,
+    charges INT,
+    staff_id VARCHAR(10),
+    FOREIGN KEY (staff_id) REFERENCES Staff(staff_id)
+);
+
+CREATE TABLE LabTestReport (
+    lab_report_id VARCHAR(10) PRIMARY KEY,
+    lab_test_name VARCHAR(30),
+    lab_test_type VARCHAR(30),
+    test_date DATE,
+    lab_report_results TEXT,
+    remark TEXT,
+    patient_id INT,
+    FOREIGN KEY (patient_id) REFERENCES Patient(patient_id)
+);
+
+CREATE TABLE Appointment (
+    appointment_id INT PRIMARY KEY,
+    appointment_date DATE,
+    appointment_time TIME,
+    status VARCHAR(30),
+    reason_for_visit TEXT,
+    patient_id INT,
+    doctor_id VARCHAR(10),
+    FOREIGN KEY (patient_id) REFERENCES Patient(patient_id),
+    FOREIGN KEY (doctor_id) REFERENCES Doctor(doctor_id)
+);
+
+CREATE TABLE Prescription (
+    pre_id VARCHAR(10) PRIMARY KEY,
+    pre_start_date DATE,
+    pre_end_date DATE,
+    medicine_dosage INT,
+    dosage_unit VARCHAR(10)
+    symptoms TEXT,
+    medicine_frequency INT,
+    description TEXT,
+    patient_id INT,
+    medicine_id VARCHAR(10),
+    FOREIGN KEY (patient_id) REFERENCES Patient(patient_id),
+    FOREIGN KEY (medicine_id) REFERENCES Medicine(medicine_id)
+);
+
+CREATE TABLE Medicine (
+    medicine_id VARCHAR(10) PRIMARY KEY,
+    medicine_name VARCHAR(30),
+    strength VARCHAR(20),
+    uses TEXT,
+    category VARCHAR(30),
+    reorder_threshold INT,
+    inventory_qty INT,
+    side_effects TEXT,
+    purchase_price DECIMAL(10, 2),
+    sell_price DECIMAL(10, 2),
+    supplier_id VARCHAR(10),
+    FOREIGN KEY (supplier_id) REFERENCES Supplier(supplier_id)
+);
+
+CREATE TABLE Medicine_detail (
+    medicine_id VARCHAR(10),
+    batch_no VARCHAR(20),
+    manufacture_date DATE,
+    expiry_date DATE,
+    PRIMARY KEY (medicine_id, batch_no),
+    FOREIGN KEY (medicine_id) REFERENCES Medicine(medicine_id)
+);
+
+CREATE TABLE Supplier (
+    supplier_id VARCHAR(10) PRIMARY KEY,
+    supplier_name VARCHAR(30),
+    email VARCHAR(50),
+    contact_no VARCHAR(10),
+    supp_add_city VARCHAR(20),
+    supp_add_state VARCHAR(20),
+    supp_add_pincode INT,
+    contact_person_name VARCHAR(30),
+    contact_person_contact_no VARCHAR(10)
+);
+
+CREATE TABLE Equipment (
+    equipment_id VARCHAR(10) PRIMARY KEY,
+    equipment_name VARCHAR(30),
+    equipment_types VARCHAR(30),
+    status VARCHAR(20),
+    purchase_date DATE,
+    warranty_period VARCHAR(20),
+    temperature_required VARCHAR(20),
+    supplier_id VARCHAR(10),
+    FOREIGN KEY (supplier_id) REFERENCES Supplier(supplier_id)
+);
+
+CREATE TABLE Room (
+    room_id VARCHAR(10),
+    bed_id VARCHAR(10),
+    current_patient_id INT,
+    charge_per_day DECIMAL(10, 2),
+    admission_date DATE,
+    discharge_date DATE,
+    PRIMARY KEY (room_id, bed_id),
+    FOREIGN KEY (current_patient_id) REFERENCES Patient(patient_id)
+);
+
+CREATE TABLE Invoice (
+    invoice_id VARCHAR(10) PRIMARY KEY,
+    invoice_date DATE,
+    invoice_amount DECIMAL(10, 2),
+    payment_method VARCHAR(30),
+    payment_status VARCHAR(20),
+    patient_id INT,
+    FOREIGN KEY (patient_id) REFERENCES Patient(patient_id)
+);
